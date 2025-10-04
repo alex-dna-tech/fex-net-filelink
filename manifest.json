@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "version": "1.0",
+  "author": "Alex Serheyev",
+  "name": "__MSG_extensionName__",
+  "description": "__MSG_extensionDescription__",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "fex-net@mv3.sample.extensions.thunderbird.net"
+    }
+  },
+  "icons": {
+    "48": "images/fex.svg",
+    "96": "images/fex.svg"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "cloud_file": {
+    "name": "__MSG_serviceName__",
+    "management_url": "management.html"
+  },
+  "permissions": [
+    "messagesRead",
+    "accountsRead",
+    "https://*.fex.net/upload/*",
+    "https://api.fex.net/*",
+    "https://fex.net/*",
+    "webRequest"
+  ],
+  "default_locale": "en"
+}

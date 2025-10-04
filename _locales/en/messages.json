@@ -1,0 +1,11 @@
+{
+  "extensionDescription": {
+    "message": "A sample addon that uses the cloudFile API to upload to FEX.net"
+  },
+  "extensionName": {
+    "message": "FEX.net CloudFile"
+  },
+  "serviceName": {
+    "message": "FEX.net"
+  }
+}
