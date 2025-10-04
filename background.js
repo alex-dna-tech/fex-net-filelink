@@ -54,19 +54,23 @@ browser.cloudFile.onFileUpload.addListener(
     }
 
     // Upload file content
-    let uploadResponse = await fetch(uploadUrl, {
-      method: "PATCH",
-      headers: {
-        authorization: `Bearer ${uploadToken}`,
-        "content-type": "application/offset+octet-stream",
-        "fsp-offset": "0",
-        "fsp-version": "1.0.0",
-      },
-      body: data,
-    });
+    const CHUNK_SIZE = 4 * 1024 * 1024;
+    for (let offset = 0; offset < data.size; offset += CHUNK_SIZE) {
+      const chunk = data.slice(offset, offset + CHUNK_SIZE);
+      let uploadResponse = await fetch(uploadUrl, {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${uploadToken}`,
+          "content-type": "application/offset+octet-stream",
+          "fsp-offset": offset.toString(),
+          "fsp-version": "1.0.0",
+        },
+        body: chunk,
+      });
 
-    if (!uploadResponse.ok) {
-      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+      }
     }
 
     return { url: `https://fex.net/s/${fileKey}` };
