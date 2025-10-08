@@ -6,7 +6,7 @@
   "description": "__MSG_extensionDescription__",
   "browser_specific_settings": {
     "gecko": {
-      "id": "fex-net@mv3.sample.extensions.thunderbird.net"
+      "id": "{d10837fc-808b-4b77-b485-6712d81e9cae}"
     }
   },
   "icons": {
@@ -21,12 +21,9 @@
     "management_url": "management.html"
   },
   "permissions": [
-    "messagesRead",
-    "accountsRead",
     "https://*.fex.net/upload/*",
     "https://api.fex.net/*",
-    "https://fex.net/*",
-    "webRequest"
+    "https://fex.net/*"
   ],
   "default_locale": "en"
 }
