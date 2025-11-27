@@ -1,5 +1,20 @@
+// [cloudFile API — WebExtension API Documentation for Thunderbird 146.0b3<br><br>Manifest V2 documentation](https://webextension-api.thunderbird.net/en/beta-mv2/cloudFile.html]
+
+browser.cloudFile.getAllAccounts().then(async (accounts) => {
+  for (let account of accounts) {
+    await browser.cloudFile.updateAccount(account.id, {
+      configured: true,
+    });
+  }
+});
+
+browser.cloudFile.onAccountDeleted.addListener((accountId) => {
+  browser.storage.local.remove(accountId);
+});
+
 browser.cloudFile.onFileUpload.addListener(
   async (account, { id, name, data }) => {
+    console.log(account, "onFileUpload", id);
     let tokenResponse = await fetch(
       "https://api.fex.net/api/v1/anonymous/upload-token",
       {

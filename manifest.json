@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "version": "1.0",
+  "version": "1.0.2",
   "author": "Alex Serheyev",
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
@@ -23,7 +23,8 @@
   "permissions": [
     "https://*.fex.net/upload/*",
     "https://api.fex.net/*",
-    "https://fex.net/*"
+    "https://fex.net/*",
+    "storage"
   ],
   "default_locale": "en"
 }
