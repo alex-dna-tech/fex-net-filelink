@@ -1,5 +1,14 @@
+browser.cloudFile.getAllAccounts().then(async (accounts) => {
+  for (let account of accounts) {
+    await browser.cloudFile.updateAccount(account.id, {
+      configured: account.id,
+    });
+  }
+});
+
 browser.cloudFile.onFileUpload.addListener(
   async (account, { id, name, data }) => {
+    console.log(account, "onFileUpload", id);
     let tokenResponse = await fetch(
       "https://api.fex.net/api/v1/anonymous/upload-token",
       {
