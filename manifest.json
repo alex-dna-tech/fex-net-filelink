@@ -6,7 +6,8 @@
   "description": "__MSG_extensionDescription__",
   "browser_specific_settings": {
     "gecko": {
-      "id": "{d10837fc-808b-4b77-b485-6712d81e9cae}"
+      "id": "{d10837fc-808b-4b77-b485-6712d81e9cae}",
+      "strict_min_version": "128.0"
     }
   },
   "icons": {
