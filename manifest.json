@@ -19,13 +19,10 @@
   },
   "cloud_file": {
     "name": "__MSG_serviceName__",
-    "management_url": "management.html"
+    "management_url": "management.html",
+    "reuse_uploads": true
   },
-  "host_permissions": [
-    "https://*.fex.net/upload/*",
-    "https://api.fex.net/*",
-    "https://fex.net/*"
-  ],
-  "permissions": ["storage"],
+  "host_permissions": ["https://*.fex.net/*", "https://fex.net/*"],
+  "permissions": ["activeTab", "storage", "tabs"],
   "default_locale": "en"
 }
