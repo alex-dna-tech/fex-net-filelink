@@ -1,95 +1,146 @@
-function parseJwt(token) {
-  var base64Url = token.split(".")[1];
-  var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  var jsonPayload = decodeURIComponent(
-    window
-      .atob(base64)
-      .split("")
-      .map(function (c) {
-        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join(""),
-  );
-
-  return JSON.parse(jsonPayload);
+// FEX.net configured by default
+const acc = browser.cloudFile.getAllAccounts();
+if (acc?.length > 0) {
+  for (let a of acc) {
+    if (a.name === "FEX.net") {
+      browser.cloudFile.updateAccount(a.id, { configured: true });
+      break;
+    }
+  }
 }
 
-// [cloudFile API — WebExtension API Documentation for Thunderbird 145.0<br><br>Manifest V3 documentation](https://webextension-api.thunderbird.net/en/mv3/cloudFile.html)
+// Anonymous FEX.net service client
+class FexService {
+  constructor(windowId) {
+    this.windowId = windowId.toString();
+    this.API_BASE = "https://api.fex.net/api/v1";
+    this.state = {
+      token: null,
+      root_id: null,
+      root_exp: null,
+      files: [],
+    };
+  }
 
-browser.cloudFile.onFileUpload.addListener(
-  async (account, fileInfo, tab, relatedFileInfo) => {
-    console.log(
-      "onFileUpload params",
-      account,
-      fileInfo.id,
-      fileInfo.name,
-      tab,
-      relatedFileInfo,
-    );
-    let tokenResponse = await fetch(
-      "https://api.fex.net/api/v1/anonymous/upload-token",
-      {
-        method: "GET",
-      },
-    );
-    let tokenData = await tokenResponse.json();
-    if (!tokenData.status == 200) {
-      throw new Error(
-        `Failed to get upload token: error status ${tokenResponse.status}, code ${tokenResponse.status}`,
-      );
+  async loadState() {
+    const data = await browser.storage.local.get(this.windowId);
+    if (data[this.windowId]) {
+      this.state = data[this.windowId];
     }
-    const uploadToken = tokenData.token;
+  }
 
+  async saveState() {
+    await browser.storage.local.set({ [this.windowId]: this.state });
+  }
+
+  _parseJwt(token) {
+    var base64Url = token.split(".")[1];
+    var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    var jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join(""),
+    );
+
+    return JSON.parse(jsonPayload);
+  }
+
+  _isTokenExpired(token) {
+    try {
+      const payload = this._parseJwt(token);
+      if (!payload.exp) {
+        return true;
+      }
+      return payload.exp < Date.now() / 1000;
+    } catch (e) {
+      // consider invalid tokens as expired
+      return true;
+    }
+  }
+
+  async _getUploadToken() {
+    const storedToken = this.state.token;
+
+    if (
+      storedToken &&
+      storedToken.value &&
+      storedToken.exp > Date.now() / 1000
+    ) {
+      return;
+    }
+
+    const response = await fetch(`${this.API_BASE}/anonymous/upload-token`);
+    const responseData = await response.json();
+    const token = responseData.token;
+    const payload = this._parseJwt(token);
+    this.state.token = {
+      value: token,
+      exp: payload.exp,
+      iat: payload.iat,
+      uk: payload.uk,
+    };
+  }
+
+  async _initUploadResource(fileInfo) {
     // Initiate file upload to get upload location
-    let initResponse = await fetch(
-      "https://api.fex.net/api/v1/anonymous/file",
-      {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${uploadToken}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          directory_id: null,
-          size: fileInfo.data.size,
-          name: fileInfo.name,
-        }),
-      },
-    );
-    let initData = await initResponse.json();
-    if (!initData.status == 200) {
-      throw new Error(
-        `Failed to initiate upload: error status ${initResponse.status}, code ${initResponse.code}`,
-      );
-    }
-    const uploadUrl = initData.location;
-    const fileKey = initData.anon_upload_link;
-
-    // Create upload resource on storage server
-    let createResponse = await fetch(uploadUrl, {
+    const initResponse = await fetch(`${this.API_BASE}/anonymous/file`, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${uploadToken}`,
+        authorization: `Bearer ${this.state.token.value}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        directory_id: null,
+        anon_upload_root_id: this.state.root_id,
+        size: fileInfo.data.size,
+        name: fileInfo.name,
+      }),
+    });
+    const initData = await initResponse.json();
+    if (initData.anon_upload_root_id && !this.state.root_id) {
+      this.state.root_id = initData.anon_upload_root_id;
+      this.state.root_exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    }
+
+    return {
+      uploadUrl: initData.location,
+      fileKey: initData.anon_upload_link,
+    };
+  }
+
+  async _createResourceFile(uploadUrl, fileInfo) {
+    // Create upload resource on storage server
+    const createResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${this.state.token.value}`,
         "fsp-filename": encodeURIComponent(fileInfo.name),
         "fsp-size": fileInfo.data.size.toString(),
         "fsp-version": "1.0.0",
       },
     });
-    if (!createResponse.status == 200) {
+    if (createResponse.status !== 201) {
       throw new Error(
-        `Failed to create upload resource: error status ${createResponse.status}, code ${createResponse.code}`,
+        `Failed to create upload resource: status ${
+          createResponse.status
+        }, response: ${await createResponse.text()}`,
       );
     }
+  }
 
+  async _uploadResourceFileByChunks(uploadUrl, fileInfo) {
     // Upload file content
     const CHUNK_SIZE = 4 * 1024 * 1024;
     for (let offset = 0; offset < fileInfo.data.size; offset += CHUNK_SIZE) {
       const chunk = fileInfo.data.slice(offset, offset + CHUNK_SIZE);
-      let uploadResponse = await fetch(uploadUrl, {
-        mode: "cors",
+      const uploadResponse = await fetch(uploadUrl, {
         method: "PATCH",
         headers: {
-          authorization: `Bearer ${uploadToken}`,
+          authorization: `Bearer ${this.state.token.value}`,
           "content-type": "application/offset+octet-stream",
           "fsp-offset": offset.toString(),
           "fsp-version": "1.0.0",
@@ -97,18 +148,65 @@ browser.cloudFile.onFileUpload.addListener(
         body: chunk,
       });
 
-      if (!uploadResponse.status == 200) {
+      if (uploadResponse.status !== 200) {
         throw new Error(
-          `Upload failed: ${uploadResponse.status}, code ${uploadResponse.code}`,
+          `Upload failed: ${
+            uploadResponse.status
+          }, response: ${await uploadResponse.text()}`,
         );
       }
     }
+  }
 
-    return { url: `https://fex.net/s/${fileKey}` };
+  async uploadFile(fileInfo) {
+    console.log("uploadFile function:", fileInfo);
+    await this._getUploadToken();
+
+    const { uploadUrl, fileKey } = await this._initUploadResource(fileInfo);
+    if (!uploadUrl || !fileKey) {
+      throw new Error("Failed to get upload URL or file key.");
+    }
+    await this._createResourceFile(uploadUrl, fileInfo);
+    await this._uploadResourceFileByChunks(uploadUrl, fileInfo);
+
+    const url = `https://fex.net/s/${fileKey}`;
+    this.state.files.push({
+      id: fileInfo.id,
+      name: fileInfo.name,
+      size: fileInfo.data.size,
+      fileKey: fileKey,
+      url: url,
+    });
+
+    return { url };
+  }
+}
+
+browser.cloudFile.onFileUpload.addListener(
+  async (account, fileInfo, tab, relatedFileInfo) => {
+    console.log(
+      "onFileUpload listener",
+      account,
+      fileInfo,
+      tab,
+      relatedFileInfo,
+    );
+
+    const fexService = new FexService(tab.windowId);
+    await fexService.loadState();
+    try {
+      const result = await fexService.uploadFile(fileInfo);
+      await fexService.saveState();
+      return result;
+    } catch (e) {
+      console.error("Upload failed:", e);
+      return { error: e.message || true };
+    }
   },
 );
 
-browser.cloudFile.onAccountAdded.addListener((account) => {
+browser.cloudFile.onAccountAdded.addListener(async (account) => {
+  await browser.cloudFile.updateAccount(account.id, { configured: true });
   console.log("onAccountAdded", account);
 });
 

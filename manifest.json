@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "Alex Serheyev",
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
@@ -19,10 +19,9 @@
   },
   "cloud_file": {
     "name": "__MSG_serviceName__",
-    "management_url": "management.html",
-    "reuse_uploads": true
+    "management_url": "management.html"
   },
   "host_permissions": ["https://*.fex.net/*", "https://fex.net/*"],
-  "permissions": ["activeTab", "storage", "tabs"],
+  "permissions": ["storage"],
   "default_locale": "en"
 }
