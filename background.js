@@ -20,6 +20,8 @@ class FexService {
       root_exp: null,
       files: [],
     };
+    this.initPromise = Promise.resolve();
+    this.tokenPromise = null;
   }
 
   async loadState() {
@@ -73,19 +75,38 @@ class FexService {
       return;
     }
 
-    const response = await fetch(`${this.API_BASE}/anonymous/upload-token`);
-    const responseData = await response.json();
-    const token = responseData.token;
-    const payload = this._parseJwt(token);
-    this.state.token = {
-      value: token,
-      exp: payload.exp,
-      iat: payload.iat,
-      uk: payload.uk,
-    };
+    if (this.tokenPromise) {
+      return this.tokenPromise;
+    }
+
+    this.tokenPromise = (async () => {
+      try {
+        const response = await fetch(`${this.API_BASE}/anonymous/upload-token`);
+        const responseData = await response.json();
+        const token = responseData.token;
+        const payload = this._parseJwt(token);
+        this.state.token = {
+          value: token,
+          exp: payload.exp,
+          iat: payload.iat,
+          uk: payload.uk,
+        };
+      } finally {
+        this.tokenPromise = null;
+      }
+    })();
+    return this.tokenPromise;
   }
 
-  async _initUploadResource(fileInfo) {
+  _initUploadResource(fileInfo) {
+    const result = this.initPromise.then(() =>
+      this._doInitUploadResource(fileInfo),
+    );
+    this.initPromise = result.catch(() => {});
+    return result;
+  }
+
+  async _doInitUploadResource(fileInfo) {
     // Initiate file upload to get upload location
     const initResponse = await fetch(`${this.API_BASE}/anonymous/file`, {
       method: "POST",
@@ -182,6 +203,8 @@ class FexService {
   }
 }
 
+const fexServicePromises = new Map();
+
 browser.cloudFile.onFileUpload.addListener(
   async (account, fileInfo, tab, relatedFileInfo) => {
     console.log(
@@ -192,8 +215,14 @@ browser.cloudFile.onFileUpload.addListener(
       relatedFileInfo,
     );
 
-    const fexService = new FexService(tab.windowId);
-    await fexService.loadState();
+    let servicePromise = fexServicePromises.get(tab.windowId);
+    if (!servicePromise) {
+      const service = new FexService(tab.windowId);
+      servicePromise = service.loadState().then(() => service);
+      fexServicePromises.set(tab.windowId, servicePromise);
+    }
+    const fexService = await servicePromise;
+
     try {
       const result = await fexService.uploadFile(fileInfo);
       await fexService.saveState();
