@@ -44,7 +44,19 @@ async function displayUploads() {
   if (filesFound) {
     document.getElementById("uploads-view").style.display = "block";
     document.getElementById("no-uploads-view").style.display = "none";
+  } else {
+    document.getElementById("uploads-view").style.display = "none";
+    document.getElementById("no-uploads-view").style.display = "block";
   }
 }
 
 displayUploads();
+
+async function clearUploads() {
+  await browser.storage.local.clear();
+  await displayUploads();
+}
+
+document
+  .getElementById("clear-uploads-btn")
+  .addEventListener("click", clearUploads);
