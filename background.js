@@ -169,8 +169,19 @@ class FexService {
         body: chunk,
       });
 
-      // Return status "No content"
-      if (uploadResponse.status !== 204) {
+      const isLastChunk = offset + chunk.size >= fileInfo.data.size;
+
+      // Return status "No content" for intermediate chunks,
+      // and 200 OK or 204 No Content for the last chunk.
+      if (isLastChunk) {
+        if (uploadResponse.status !== 200 && uploadResponse.status !== 204) {
+          throw new Error(
+            `Upload failed: ${
+              uploadResponse.status
+            }, response: ${await uploadResponse.text()}`,
+          );
+        }
+      } else if (uploadResponse.status !== 204) {
         throw new Error(
           `Upload failed: ${
             uploadResponse.status
