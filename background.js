@@ -1,3 +1,10 @@
+// FEX.net configured by default
+browser.storage.local.get("conf").then((c) => {
+  if (c.accountId) {
+    browser.cloudFile.updateAccount([c.accountId], { configured: true });
+  }
+});
+
 // Anonymous FEX.net service client
 class FexService {
   constructor(windowId) {

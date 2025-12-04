@@ -1,8 +1,8 @@
 const id = new URL(location.href).searchParams.get("accountId");
 
 if (typeof browser.cloudFile.getAccount(id).configured == "undefined") {
-  browser.storage.local.set({ [id]: { configured: true } });
   browser.cloudFile.updateAccount(id, { configured: true });
+  browser.storage.local.set({ ["conf"]: { accountId: id, configured: true } });
 }
 
 async function displayUploads() {
@@ -15,7 +15,7 @@ async function displayUploads() {
   for (const key in allData) {
     // A simple check to see if it's one of our window state objects
     if (
-      !allData[key].hasOwnProperty("configured") &&
+      !key === "conf" &&
       typeof allData[key] === "object" &&
       allData[key] !== null &&
       allData[key].hasOwnProperty("files") &&
