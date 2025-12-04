@@ -1,14 +1,3 @@
-// FEX.net configured by default
-const acc = browser.cloudFile.getAllAccounts();
-if (acc?.length > 0) {
-  for (let a of acc) {
-    if (a.name === "FEX.net") {
-      browser.cloudFile.updateAccount(a.id, { configured: true });
-      break;
-    }
-  }
-}
-
 // Anonymous FEX.net service client
 class FexService {
   constructor(windowId) {

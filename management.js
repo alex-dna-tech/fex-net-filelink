@@ -1,6 +1,7 @@
 const id = new URL(location.href).searchParams.get("accountId");
 
 if (typeof browser.cloudFile.getAccount(id).configured == "undefined") {
+  browser.storage.local.set({ [id]: { configured: true } });
   browser.cloudFile.updateAccount(id, { configured: true });
 }
 
@@ -14,6 +15,7 @@ async function displayUploads() {
   for (const key in allData) {
     // A simple check to see if it's one of our window state objects
     if (
+      !allData[key].hasOwnProperty("configured") &&
       typeof allData[key] === "object" &&
       allData[key] !== null &&
       allData[key].hasOwnProperty("files") &&
@@ -53,7 +55,17 @@ async function displayUploads() {
 displayUploads();
 
 async function clearUploads() {
-  await browser.storage.local.clear();
+  const allData = await browser.storage.local.get(null);
+  const keysToRemove = [];
+  for (const key in allData) {
+    if (!allData[key].hasOwnProperty("configured")) {
+      keysToRemove.push(key);
+    }
+  }
+
+  if (keysToRemove.length > 0) {
+    await browser.storage.local.remove(keysToRemove);
+  }
   await displayUploads();
 }
 
