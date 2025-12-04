@@ -169,7 +169,8 @@ class FexService {
         body: chunk,
       });
 
-      if (uploadResponse.status !== 200) {
+      // Return status "No content"
+      if (uploadResponse.status !== 204) {
         throw new Error(
           `Upload failed: ${
             uploadResponse.status
