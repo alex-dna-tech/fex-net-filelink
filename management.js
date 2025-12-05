@@ -1,10 +1,3 @@
-const id = new URL(location.href).searchParams.get("accountId");
-
-if (typeof browser.cloudFile.getAccount(id).configured == "undefined") {
-  browser.cloudFile.updateAccount(id, { configured: true });
-  browser.storage.local.set({ ["conf"]: { accountId: id, configured: true } });
-}
-
 async function displayUploads() {
   const tableBody = document.querySelector("#uploads-table tbody");
   tableBody.innerHTML = ""; // Clear existing rows
