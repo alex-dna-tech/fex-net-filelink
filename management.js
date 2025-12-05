@@ -1,3 +1,6 @@
+const id = new URL(location.href).searchParams.get("accountId");
+browser.cloudFile.updateAccount(id, { configured: true });
+
 async function displayUploads() {
   const tableBody = document.querySelector("#uploads-table tbody");
   tableBody.innerHTML = ""; // Clear existing rows
@@ -8,7 +11,6 @@ async function displayUploads() {
   for (const key in allData) {
     // A simple check to see if it's one of our window state objects
     if (
-      !key === "conf" &&
       typeof allData[key] === "object" &&
       allData[key] !== null &&
       allData[key].hasOwnProperty("files") &&

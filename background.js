@@ -264,6 +264,8 @@ async function setConfigured() {
   }
 }
 
+setConfigured();
+
 browser.cloudFile.onAccountAdded.addListener(async () => {
   await setConfigured();
 });
