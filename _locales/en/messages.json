@@ -1,11 +1,42 @@
 {
   "extensionDescription": {
+    "description": "Description of the extension.",
     "message": "Add-on that uses the cloudFile API to upload to FEX.net"
   },
   "extensionName": {
+    "description": "Name of the extension.",
     "message": "FEX.net CloudFile"
   },
   "serviceName": {
-    "message": "FEX.net"
+    "message": "FEX.net",
+    "description": "Name of the service."
+  },
+  "mngFexIntro": {
+    "description": "Management intro message",
+    "message": "!HTML! This extension provides Filelink support for Free <a href=\"https:\/\/fex.net\/\">FEX.net<\/a>, an anonymous 100GB files upload service where links expire after 7 days."
+  },
+  "mngProjectSupport": {
+    "description": "Management support message",
+    "message": "!HTML! To participate in the development of this extension or to report an issue, please visit the <a href=\"https:\/\/github.com\/alex-dna-tech\/fex-net-filelink\/issues\" >project issues page<\/a>."
+  },
+  "mngFilename": {
+    "message": "Filename",
+    "description": "Label for Filename"
+  },
+  "mngExpiration": {
+    "message": "Expiration",
+    "description": "Label for Expiration"
+  },
+  "mngLink": {
+    "message": "Link",
+    "description": "Label for Link"
+  },
+  "mngClearUploadsBtn": {
+    "message": "Clear All Uploads",
+    "description": "Label for Clear All Uploads button"
+  },
+  "mngNoUploadedFiles": {
+    "message": "No uploaded files found.",
+    "description": "No uploaded files found message"
   }
 }
