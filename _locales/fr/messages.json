@@ -1,0 +1,61 @@
+{
+  "extensionDescription": {
+    "message": "Module complémentaire qui utilise l'API cloudFile pour télécharger vers FEX.net",
+    "description": "Description of the extension.",
+    "hash": "0f41f2197cf3371981224e7a6e69e934"
+  },
+  "mngFexIntro": {
+    "message": "Cette extension fournit la prise en charge de Filelink pour Free $FEX$, un service de téléchargement de fichiers anonymes dont les liens expirent après 7 jours.",
+    "description": "Management intro message",
+    "placeholders": {
+      "fex": {
+        "content": "$1",
+        "example": "<a href=\"https://fex.net/\">FEX.net</a>"
+      }
+    },
+    "hash": "64801e0cea9dde11e5aea3f56867770b"
+  },
+  "linkToSupportText": {
+    "message": "Page des problèmes liés au projet",
+    "description": "The text shown for the support link",
+    "hash": "4266248fc2c3997384f626f202ff2c24"
+  },
+  "mngProjectSupport": {
+    "message": "Pour participer au développement de cette extension ou signaler un problème, rendez-vous sur $SUPPORT$.",
+    "description": "Management support message",
+    "placeholders": {
+      "support": {
+        "content": "$1",
+        "example": "<a href=\"https://github.com/alex-dna-tech/fex-net-filelink/issues\" >project issues page</a>"
+      }
+    },
+    "hash": "e34d0a388f43052e8861dbf736fa69a4"
+  },
+  "mngUploadedFiles": {
+    "message": "Fichiers téléchargés",
+    "description": "Header Uploaded Files",
+    "hash": "9d41beac86fc086acf17843bcb88c553"
+  },
+  "mngFilename": {
+    "message": "Nom du fichier",
+    "description": "Label for Filename",
+    "hash": "f8d6ba73eae69fb2aab881eca73567db"
+  },
+  "mngLink": {
+    "message": "Lien",
+    "description": "Label for Link",
+    "hash": "8ccd7e8337c26e99312889267787175e"
+  },
+  "mngClearUploadsBtn": {
+    "message": "Effacer tous les téléchargements",
+    "description": "Label for Clear All Uploads button",
+    "hash": "e7f88eea0838a503043d887656b3d33a"
+  },
+  "mngNoUploadedFiles": {
+    "message": "Aucun fichier téléchargé trouvé.",
+    "description": "No uploaded files found message",
+    "hash": "f718ec4fb4eb251495254cfe93c5868e"
+  },
+
+  "__WET_LOCALE__": { "message": "fr" }
+}
