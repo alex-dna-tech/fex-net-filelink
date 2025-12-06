@@ -11,13 +11,45 @@
     "message": "FEX.net",
     "description": "Name of the service."
   },
+  "linkToFex": {
+    "message": "https://fex.net",
+    "description": "Link to FEX service"
+  },
+  "linkToFexText": {
+    "message": "FEX.net",
+    "description": "The text shown for the FEX link"
+  },
   "mngFexIntro": {
     "description": "Management intro message",
-    "message": "!HTML! This extension provides Filelink support for Free <a href=\"https:\/\/fex.net\/\">FEX.net<\/a>, an anonymous 100GB files upload service where links expire after 7 days."
+    "message": "This extension provides Filelink support for Free $FEX$, an anonymous 100GB files upload service where links expire after 7 days.",
+    "placeholders": {
+      "fex": {
+        "content": "$1",
+        "example": "<a href=\"https://fex.net/\">FEX.net</a>"
+      }
+    }
+  },
+  "linkToSupport": {
+    "message": "https://github.com/alex-dna-tech/fex-net-filelink/issues",
+    "description": "Link to extension issues page"
+  },
+  "linkToSupportText": {
+    "message": "project issues page",
+    "description": "The text shown for the support link"
   },
   "mngProjectSupport": {
     "description": "Management support message",
-    "message": "!HTML! To participate in the development of this extension or to report an issue, please visit the <a href=\"https:\/\/github.com\/alex-dna-tech\/fex-net-filelink\/issues\" >project issues page<\/a>."
+    "message": "To participate in the development of this extension or to report an issue, please visit the $SUPPORT$.",
+    "placeholders": {
+      "support": {
+        "content": "$1",
+        "example": "<a href=\"https://github.com/alex-dna-tech/fex-net-filelink/issues\" >project issues page</a>"
+      }
+    }
+  },
+  "mngUploadedFiles": {
+    "message": "Uploaded Files",
+    "description": "Header Uploaded Files"
   },
   "mngFilename": {
     "message": "Filename",
