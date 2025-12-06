@@ -45,4 +45,6 @@ sequenceDiagram
 
     Note over TB: Returns file link to Thunderbird
 ```
+## Translations
 
+Use the online [Web Extension Translator](https://lusito.github.io/web-ext-translator/?gh=https://github.com/alex-dna-tech/fex-net-filelink/tree/master) to help improve translations of this add-on. Then, open a pull request or issue with the translated message or upload a ZIP archive.
