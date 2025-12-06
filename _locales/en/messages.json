@@ -20,7 +20,7 @@
     "description": "The text shown for the FEX link"
   },
   "mngFexIntro": {
-    "message": "This extension provides Filelink support for Free $FEX$, an anonymous 100GB files upload service where links expire after 7 days.",
+    "message": "This extension provides Filelink support for Free $FEX$, an anonymous files upload service where links expire after 7 days.",
     "description": "Management intro message",
     "placeholders": {
       "fex": {
