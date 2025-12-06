@@ -4,6 +4,26 @@
     "description": "Description of the extension.",
     "hash": "0f41f2197cf3371981224e7a6e69e934"
   },
+  "extensionName": {
+    "message": "FEX.net CloudFile",
+    "description": "Name of the extension.",
+    "hash": "5d24ff97e4feb3fa3a34d081f7169b96"
+  },
+  "serviceName": {
+    "message": "FEX.net",
+    "description": "Name of the service.",
+    "hash": "d14698bf3b51583bd6408218f0a3cacf"
+  },
+  "linkToFex": {
+    "message": "https://fex.net",
+    "description": "Link to FEX service",
+    "hash": "cdf0e23c26d56b042cde1b69096c7792"
+  },
+  "linkToFexText": {
+    "message": "FEX.net",
+    "description": "The text shown for the FEX link",
+    "hash": "d14698bf3b51583bd6408218f0a3cacf"
+  },
   "mngFexIntro": {
     "message": "Це розширення забезпечує підтримку Filelink для безкоштовного сервісу $FEX$, анонімного сервісу для завантаження розміром до 100 ГБ, де посилання втрачають чинність через 7 днів.",
     "description": "Management intro message",
@@ -14,6 +34,10 @@
       }
     },
     "hash": "384462d1d3ba25bfe8977df55d5d833b"
+  },
+  "linkToSupport": {
+    "message": "https://github.com/alex-dna-tech/fex-net-filelink/issues",
+    "hash": "40e1b9ba91acecc568102cb2861a76b9"
   },
   "linkToSupportText": {
     "message": "сторінку проекту",

@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
-    "description": "Description of the extension.",
-    "message": "Add-on that uses the cloudFile API to upload to FEX.net"
+    "message": "Add-on that uses the cloudFile API to upload to FEX.net",
+    "description": "Description of the extension."
   },
   "extensionName": {
-    "description": "Name of the extension.",
-    "message": "FEX.net CloudFile"
+    "message": "FEX.net CloudFile",
+    "description": "Name of the extension."
   },
   "serviceName": {
     "message": "FEX.net",
@@ -20,8 +20,8 @@
     "description": "The text shown for the FEX link"
   },
   "mngFexIntro": {
-    "description": "Management intro message",
     "message": "This extension provides Filelink support for Free $FEX$, an anonymous 100GB files upload service where links expire after 7 days.",
+    "description": "Management intro message",
     "placeholders": {
       "fex": {
         "content": "$1",
@@ -30,16 +30,15 @@
     }
   },
   "linkToSupport": {
-    "message": "https://github.com/alex-dna-tech/fex-net-filelink/issues",
-    "description": "Link to extension issues page"
+    "message": "https://github.com/alex-dna-tech/fex-net-filelink/issues"
   },
   "linkToSupportText": {
     "message": "project issues page",
     "description": "The text shown for the support link"
   },
   "mngProjectSupport": {
-    "description": "Management support message",
     "message": "To participate in the development of this extension or to report an issue, please visit the $SUPPORT$.",
+    "description": "Management support message",
     "placeholders": {
       "support": {
         "content": "$1",
@@ -70,5 +69,7 @@
   "mngNoUploadedFiles": {
     "message": "No uploaded files found.",
     "description": "No uploaded files found message"
-  }
+  },
+
+  "__WET_LOCALE__": { "message": "en" }
 }

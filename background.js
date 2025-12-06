@@ -6,7 +6,7 @@ async function setConfigured(label = "") {
       await browser.cloudFile.updateAccount(a.id, {
         configured: true,
       });
-      console.log("configured:", label, cfa);
+      console.log("configured:", label);
     }
   }
 }
