@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.0.11",
+  "version": "1.0.12",
   "author": "Alex Serheyev",
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",

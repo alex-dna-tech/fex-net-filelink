@@ -1,3 +1,18 @@
+async function setConfigured(label = "") {
+  const cfa = await browser.cloudFile.getAllAccounts();
+
+  for (const a of cfa) {
+    if (!a.configured) {
+      await browser.cloudFile.updateAccount(a.id, {
+        configured: true,
+      });
+      console.log("configured:", label, cfa);
+    }
+  }
+}
+
+setConfigured("background.js");
+
 // Anonymous FEX.net service client
 class FexService {
   constructor(windowId) {
@@ -235,11 +250,12 @@ browser.cloudFile.onFileUpload.addListener(
   },
 );
 
-browser.cloudFile.onAccountDeleted.addListener((account) => {
-  console.log("onAccountDeleted", account);
-});
+// CloudFile Events Listners
+browser.cloudFile.onAccountAdded.addListener(() =>
+  setConfigured("onAccountAdded"),
+);
 
-//TODO: invoke on attachment converted from cloud to regular
+//TODO: invoke on attachment converted from cloudFile to regular
 browser.cloudFile.onFileDeleted.addListener((account, fileId, tab) => {
   console.log("onFileDeleted", account, fileId, tab);
 });
@@ -252,22 +268,7 @@ browser.cloudFile.onFileUploadAbort.addListener((account, fileId, tab) => {
   console.log("onFileUploadAbort ", account, fileId, tab);
 });
 
-async function setConfigured() {
-  const cfa = await browser.cloudFile.getAllAccounts();
-
-  for (const a of cfa) {
-    if (!a.configured) {
-      await browser.cloudFile.updateAccount(a.id, {
-        configured: true,
-      });
-    }
-  }
-}
-
-setConfigured();
-
-browser.cloudFile.onAccountAdded.addListener(async () => {
-  await setConfigured();
-});
-
-browser.runtime.onInstalled.addListener(setConfigured);
+// Runtime Events Listners
+browser.runtime.onConnect.addListener(() => setConfigured("onConnect"));
+browser.runtime.onInstalled.addListener(() => setConfigured("onInstalled"));
+browser.runtime.onStartup.addListener(() => setConfigured("onStartup"));
