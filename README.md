@@ -47,4 +47,4 @@ sequenceDiagram
 ```
 ## Translations
 
-Use the online [Web Extension Translator](https://lusito.github.io/web-ext-translator/?gh=https://github.com/alex-dna-tech/fex-net-filelink/tree/master) to help improve translations of this add-on. Then, open a pull request or issue with the translated message or upload a ZIP archive.
+Use the online [Web Extension Translator](https://lusito.github.io/web-ext-translator/?gh=https://github.com/alex-dna-tech/fex-net-filelink/tree/master) to help improve translations of this add-on. Skip messages not required to translate. Then, open a pull request or issue with the translated message or upload a ZIP archive.
