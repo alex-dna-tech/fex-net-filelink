@@ -3,6 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <title></title>
+    <style>
+      /* Style for expired rows */
+      .expired {
+        color: gray;
+      }
+      /* Style for links in expired rows */
+      .expired a {
+        color: gray;
+        pointer-events: none;
+        text-decoration: line-through;
+      }
+      /* Truncate long filenames in the first column */
+      #uploads-table td:first-child {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
     <script src="Localizer.js" type="module"></script>
     <script src="management.js" type="application/javascript" defer></script>
   </head>
