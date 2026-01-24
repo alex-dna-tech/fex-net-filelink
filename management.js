@@ -1,6 +1,36 @@
 const id = new URL(location.href).searchParams.get("accountId");
 browser.cloudFile.updateAccount(id, { configured: true });
 
+// Remove expired records on script start
+removeExpiredRecords();
+
+/**
+ * Removes expired records from browser.storage.local
+ */
+async function removeExpiredRecords() {
+  const allData = await browser.storage.local.get(null);
+  const keysToRemove = [];
+
+  for (const key in allData) {
+    const record = allData[key];
+
+    // Check if it's one of our window state objects with expiration
+    if (
+      typeof record === "object" &&
+      record !== null &&
+      record.hasOwnProperty("root_exp") &&
+      typeof record.root_exp === "number" &&
+      record.root_exp < Date.now()
+    ) {
+      keysToRemove.push(key);
+    }
+  }
+
+  if (keysToRemove.length > 0) {
+    await browser.storage.local.remove(keysToRemove);
+  }
+}
+
 /**
  * Formats the remaining time until an expiration timestamp.
  * @param {number} expiryTimestamp - The expiration timestamp in milliseconds.
@@ -20,7 +50,9 @@ function formatTimeRemaining(expiryTimestamp) {
   // Calculate remaining days
   const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
   // Calculate remaining hours
-  const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const hours = Math.floor(
+    (remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  );
 
   // If less than an hour remains, show a specific message
   if (days === 0 && hours === 0) {
