@@ -4,6 +4,12 @@
     <meta charset="utf-8" />
     <title></title>
     <style>
+      /* Make table 100% width */
+      #uploads-table {
+        width: 100%;
+        table-layout: fixed;
+      }
+
       /* Style for expired rows */
       .expired {
         color: gray;
@@ -14,12 +20,30 @@
         pointer-events: none;
         text-decoration: line-through;
       }
-      /* Truncate long filenames in the first column */
-      #uploads-table td:first-child {
-        max-width: 250px;
+      /* Allow first column to be the biggest and grow */
+      #uploads-table td:first-child,
+      #uploads-table th:first-child {
+        /* This will take remaining space after other columns are sized */
+        min-width: 250px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        text-align: left;
+      }
+
+      /* Set widths for other columns */
+      #uploads-table td:nth-child(2),
+      #uploads-table th:nth-child(2) {
+        /* Expiration column */
+        width: 120px;
+        text-align: center;
+      }
+
+      #uploads-table td:nth-child(3),
+      #uploads-table th:nth-child(3) {
+        /* Link column */
+        width: 150px;
+        text-align: center;
       }
     </style>
     <script src="Localizer.js" type="module"></script>
