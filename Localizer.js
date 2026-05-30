@@ -117,7 +117,7 @@ function innerTranslateTextNodes(parent, translatedMessage, subsContainer) {
   // We also trigger for =, because we assume we have at least one text node, which
   // is also returned in splitTranslatedMessage
   if (splitTranslatedMessage.length <= subsContainer.substitutions.length) {
-    console.warn(
+    console.log(
       "You used only",
       splitTranslatedMessage.length,
       "message blocks, although you could use",
@@ -159,7 +159,7 @@ function innerTranslateTextNodes(parent, translatedMessage, subsContainer) {
 
       // if we have no more text elements
       if (nextText.done) {
-        console.warn(
+        console.log(
           "Translation contained more text than HTML template. We now add a note. Triggered for translation: ",
           message,
         );

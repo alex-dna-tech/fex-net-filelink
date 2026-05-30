@@ -4,7 +4,7 @@
 
 GitHub issues via `gh` CLI. See `docs/agents/issue-tracker.md`.
 
-### Triage labels
+### Triage labels fs
 
 Standard triage roles. See `docs/agents/triage-labels.md`.
 
@@ -14,4 +14,4 @@ Single-context layout. See `docs/agents/domain.md`.
 
 ### Conventions
 
-- Use only `console.log` as debug
+- Use only `console.log` as debug (no console.error, warn functions)

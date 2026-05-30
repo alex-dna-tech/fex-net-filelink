@@ -135,19 +135,11 @@ async function displayUploads() {
 displayUploads();
 
 async function clearUploads() {
-  const allData = await browser.storage.local.get(null);
-  const keysToRemove = [];
-  for (const key in allData) {
-    // Do not remove account configuration
-    if (!allData[key].hasOwnProperty("configured")) {
-      keysToRemove.push(key);
-    }
+  try {
+    await browser.runtime.sendMessage({ type: "clear-all-uploads" });
+  } catch (e) {
+    console.log("Failed to clear uploads:", e);
   }
-
-  if (keysToRemove.length > 0) {
-    await browser.storage.local.remove(keysToRemove);
-  }
-  // Refresh the display
   await displayUploads();
 }
 

@@ -14,6 +14,8 @@ global.browser = {
     onConnect: { addListener: jest.fn() },
     onInstalled: { addListener: jest.fn() },
     onStartup: { addListener: jest.fn() },
+    onMessage: { addListener: jest.fn() },
+    sendMessage: jest.fn().mockResolvedValue({}),
   },
   permissions: {
     contains: jest.fn().mockResolvedValue(true),
@@ -38,7 +40,7 @@ global.window = {
 global.fetch = jest.fn();
 
 // Load FexService
-const { FexService } = require('../background.js');
+const { FexService, handleClearAllUploads } = require('../background.js');
 
 describe('FexService', () => {
   let service;
@@ -206,7 +208,79 @@ describe('FexService', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  test('saveState does not lose data when concurrent deletions race', async () => {
+  test('handleClearAllUploads calls clearAllUploads for each window with files', async () => {
+  global.browser.storage.local.get.mockResolvedValueOnce({
+    '123': {
+      token: { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 },
+      root_id: 444,
+      root_exp: Date.now() + 3600000,
+      files: [{ id: 'tb-file-1', fexId: 555, parentId: 444 }],
+    },
+    '456': {
+      token: { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 },
+      root_id: 777,
+      root_exp: Date.now() + 3600000,
+      files: [{ id: 'tb-file-2', fexId: 556, parentId: 777 }],
+    },
+  });
+
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok' }) });
+
+  await handleClearAllUploads();
+
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test('clearAllUploads skips API calls when expired and resets state', async () => {
+  service.state.files = [
+    { id: 'tb-file-1', fexId: 555, parentId: 444 },
+  ];
+  service.state.root_id = 444;
+  service.state.root_exp = Date.now() - 1000;
+
+  await service.clearAllUploads();
+
+  expect(fetch).not.toHaveBeenCalled();
+  expect(service.state.files).toHaveLength(0);
+  expect(service.state.root_id).toBeNull();
+  expect(service.state.root_exp).toBeNull();
+  expect(global.browser.storage.local.set).toHaveBeenCalled();
+});
+
+test('clearAllUploads deletes all files grouped by parentId and resets state', async () => {
+  service.state.files = [
+    { id: 'tb-file-1', fexId: 555, parentId: 444 },
+    { id: 'tb-file-2', fexId: 556, parentId: 444 },
+    { id: 'tb-file-3', fexId: 557, parentId: 777 },
+  ];
+  service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+  service.state.root_id = 444;
+  service.state.root_exp = Date.now() + 3600000;
+
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok' }) });
+
+  await service.clearAllUploads();
+
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(fetch).toHaveBeenCalledWith(
+    'https://api.fex.net/api/v1/file/delete/',
+    expect.objectContaining({
+      body: JSON.stringify({ files_ids: [555, 556], parent_id: 444 }),
+    }),
+  );
+  expect(fetch).toHaveBeenCalledWith(
+    'https://api.fex.net/api/v1/file/delete/',
+    expect.objectContaining({
+      body: JSON.stringify({ files_ids: [557], parent_id: 777 }),
+    }),
+  );
+  expect(service.state.files).toHaveLength(0);
+  expect(service.state.root_id).toBeNull();
+  expect(service.state.root_exp).toBeNull();
+  expect(global.browser.storage.local.set).toHaveBeenCalled();
+});
+
+test('saveState does not lose data when concurrent deletions race', async () => {
     let resolveFirst, resolveSecond;
     const first = new Promise(r => { resolveFirst = r; });
     const second = new Promise(r => { resolveSecond = r; });

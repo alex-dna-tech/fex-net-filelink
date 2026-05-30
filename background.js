@@ -39,7 +39,7 @@ class FexService {
   async saveState() {
     const snapshot = JSON.parse(JSON.stringify(this.state));
     this._saveQueue = this._saveQueue.then(() =>
-      browser.storage.local.set({ [this.windowId]: snapshot })
+      browser.storage.local.set({ [this.windowId]: snapshot }),
     );
     return this._saveQueue;
   }
@@ -136,7 +136,9 @@ class FexService {
       this.state.root_exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
     }
 
-    const fexId = initData.id ?? parseInt(initData.location.match(/\/upload\/(\d+)/)?.[1], 10);
+    const fexId =
+      initData.id ??
+      parseInt(initData.location.match(/\/upload\/(\d+)/)?.[1], 10);
 
     return {
       uploadUrl: initData.location,
@@ -207,15 +209,63 @@ class FexService {
     return lastResponseData;
   }
 
+  async clearAllUploads() {
+    if (this.state.root_exp != null && this.state.root_exp < Date.now()) {
+      this.state.files = [];
+      this.state.root_id = null;
+      this.state.root_exp = null;
+      await this.saveState();
+      return;
+    }
+
+    try {
+      await this._getUploadToken();
+
+      const groups = new Map();
+      for (const file of this.state.files) {
+        if (file.fexId != null && file.parentId != null) {
+          if (!groups.has(file.parentId)) {
+            groups.set(file.parentId, []);
+          }
+          groups.get(file.parentId).push(file.fexId);
+        }
+      }
+
+      for (const [parentId, fexIds] of groups) {
+        const response = await fetch(`${this.API_BASE}/file/delete/`, {
+          method: "DELETE",
+          headers: {
+            authorization: `Bearer ${this.state.token.value}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            files_ids: [...new Set(fexIds)],
+            parent_id: parentId,
+          }),
+        });
+        if (!response.ok) {
+          console.log("Failed to delete files:", await response.text());
+        }
+      }
+
+      this.state.files = [];
+      this.state.root_id = null;
+      this.state.root_exp = null;
+      await this.saveState();
+    } catch (e) {
+      console.log("Error clearing uploads:", e);
+    }
+  }
+
   async deleteFile(fileId) {
     const file = this.state.files.find((f) => f.id === fileId);
     if (!file) {
-      console.warn("deleteFile: file not found", fileId);
+      console.log("deleteFile: file not found", fileId);
       return;
     }
 
     if (file.fexId == null) {
-      console.warn("deleteFile: missing fexId for file", fileId);
+      console.log("deleteFile: missing fexId for file", fileId);
       return;
     }
 
@@ -278,7 +328,10 @@ class FexService {
       throw new Error("Failed to get upload URL or file key.");
     }
     await this._createResourceFile(uploadUrl, fileInfo);
-    const uploadResult = await this._uploadResourceFileByChunks(uploadUrl, fileInfo);
+    const uploadResult = await this._uploadResourceFileByChunks(
+      uploadUrl,
+      fileInfo,
+    );
 
     const realFexId = uploadResult?.id ?? fexId;
 
@@ -363,11 +416,30 @@ browser.cloudFile.onFileUploadAbort.addListener((account, fileId, tab) => {
   console.log("onFileUploadAbort ", account, fileId, tab);
 });
 
+async function handleClearAllUploads() {
+  const allData = await browser.storage.local.get(null);
+  const promises = [];
+  for (const key in allData) {
+    if (allData[key]?.files && Array.isArray(allData[key].files)) {
+      const service = new FexService(key);
+      promises.push(service.loadState().then(() => service.clearAllUploads()));
+    }
+  }
+  await Promise.all(promises);
+}
+
+browser.runtime.onMessage.addListener(async (message) => {
+  if (message.type === "clear-all-uploads") {
+    await handleClearAllUploads();
+    return { success: true };
+  }
+});
+
 // Runtime Events Listners
 browser.runtime.onConnect.addListener(() => setConfigured("onConnect"));
 browser.runtime.onInstalled.addListener(() => setConfigured("onInstalled"));
 browser.runtime.onStartup.addListener(() => setConfigured("onStartup"));
 
 if (typeof module !== "undefined") {
-  module.exports = { FexService };
+  module.exports = { FexService, handleClearAllUploads };
 }
