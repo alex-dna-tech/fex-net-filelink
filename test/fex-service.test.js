@@ -168,4 +168,87 @@ describe('FexService', () => {
 
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  test('batches sibling files in same parent into single delete call', async () => {
+    service.state.files = [
+      { id: 'tb-file-1', fexId: 555, parentId: 444 },
+      { id: 'tb-file-2', fexId: 556, parentId: 444 }
+    ];
+    service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+
+    fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'ok' }) });
+
+    await service.deleteFile('tb-file-1');
+
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.fex.net/api/v1/file/delete/',
+      expect.objectContaining({
+        body: JSON.stringify({ files_ids: [555, 556], parent_id: 444 }),
+      }),
+    );
+    expect(service.state.files).toHaveLength(0);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('second deleteFile is no-op after batch already removed siblings', async () => {
+    service.state.files = [
+      { id: 'tb-file-1', fexId: 555, parentId: 444 },
+      { id: 'tb-file-2', fexId: 556, parentId: 444 }
+    ];
+    service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok' }) });
+
+    await service.deleteFile('tb-file-1');
+    await service.deleteFile('tb-file-2');
+
+    expect(service.state.files).toHaveLength(0);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('saveState does not lose data when concurrent deletions race', async () => {
+    let resolveFirst, resolveSecond;
+    const first = new Promise(r => { resolveFirst = r; });
+    const second = new Promise(r => { resolveSecond = r; });
+
+    const fakeStore = {};
+    let callCount = 0;
+
+    global.browser.storage.local.set.mockImplementation(async (data) => {
+      const key = Object.keys(data)[0];
+      const snapshot = JSON.parse(JSON.stringify(data[key]));
+      callCount++;
+      const gate = callCount === 1 ? first : second;
+      await gate;
+      fakeStore[key] = snapshot;
+    });
+
+    service.state.files = [
+      { id: 'tb-file-1', fexId: 555, parentId: 444 },
+      { id: 'tb-file-2', fexId: 556, parentId: 444 }
+    ];
+    service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+
+    fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok' }) });
+
+    const deletePromise = Promise.all([
+      service.deleteFile('tb-file-1'),
+      service.deleteFile('tb-file-2')
+    ]);
+
+    // Both deleteFile calls batch all siblings. Both response handlers run and
+    // call saveState. The queue serializes writes — only first set is called.
+    await new Promise(r => setTimeout(r, 5));
+    expect(callCount).toBe(1);
+
+    resolveFirst();
+    await new Promise(r => setTimeout(r, 5));
+    expect(callCount).toBe(2);
+
+    resolveSecond();
+    await deletePromise;
+
+    expect(service.state.files).toHaveLength(0);
+    expect(fakeStore['123'].files).toHaveLength(0);
+  });
 });

@@ -26,6 +26,7 @@ class FexService {
     };
     this.initPromise = Promise.resolve();
     this.tokenPromise = null;
+    this._saveQueue = Promise.resolve();
   }
 
   async loadState() {
@@ -36,7 +37,11 @@ class FexService {
   }
 
   async saveState() {
-    await browser.storage.local.set({ [this.windowId]: this.state });
+    const snapshot = JSON.parse(JSON.stringify(this.state));
+    this._saveQueue = this._saveQueue.then(() =>
+      browser.storage.local.set({ [this.windowId]: snapshot })
+    );
+    return this._saveQueue;
   }
 
   _parseJwt(token) {
@@ -216,6 +221,12 @@ class FexService {
 
     try {
       await this._getUploadToken();
+
+      const filesToDelete = this.state.files.filter(
+        (f) => f.parentId === file.parentId && f.fexId != null,
+      );
+      const fexIdsToDelete = [...new Set(filesToDelete.map((f) => f.fexId))];
+
       const response = await fetch(`${this.API_BASE}/file/delete/`, {
         method: "DELETE",
         headers: {
@@ -223,13 +234,16 @@ class FexService {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          files_ids: [file.fexId],
+          files_ids: fexIdsToDelete,
           parent_id: file.parentId,
         }),
       });
 
       if (response.ok) {
-        this.state.files = this.state.files.filter((f) => f.id !== fileId);
+        const removedIds = new Set(filesToDelete.map((f) => f.id));
+        this.state.files = this.state.files.filter(
+          (f) => !removedIds.has(f.id),
+        );
         await this.saveState();
       } else {
         console.log("Failed to delete file:", await response.text());
