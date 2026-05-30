@@ -1,0 +1,11 @@
+{
+  "name": "fex-net-send",
+  "version": "1.0.0",
+  "description": "FEX.net Thunderbird FileLink",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

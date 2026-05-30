@@ -134,6 +134,8 @@ class FexService {
     return {
       uploadUrl: initData.location,
       fileKey: initData.anon_upload_link,
+      fexId: initData.id,
+      parentId: initData.anon_upload_root_id,
     };
   }
 
@@ -195,11 +197,58 @@ class FexService {
     }
   }
 
+  async deleteFile(fileId) {
+    const file = this.state.files.find((f) => f.id === fileId);
+    if (!file) {
+      console.warn("deleteFile: file not found", fileId);
+      return;
+    }
+
+    try {
+      await this._getUploadToken();
+      const response = await fetch(`${this.API_BASE}/file/delete/`, {
+        method: "DELETE",
+        headers: {
+          authorization: `Bearer ${this.state.token.value}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          files_ids: [file.fexId],
+          parent_id: file.parentId,
+        }),
+      });
+
+      if (response.ok) {
+        this.state.files = this.state.files.filter((f) => f.id !== fileId);
+        await this.saveState();
+      } else {
+        console.error("Failed to delete file:", await response.text());
+      }
+    } catch (e) {
+      console.error("Error deleting file:", e);
+    }
+  }
+
   async uploadFile(fileInfo) {
     console.log("uploadFile function:", fileInfo);
-    await this._getUploadToken();
 
-    const { uploadUrl, fileKey } = await this._initUploadResource(fileInfo);
+    try {
+      await this._getUploadToken();
+    } catch (e) {
+      const origins = browser.runtime.getManifest().host_permissions,
+        granted = await browser.permissions.contains({
+          origins,
+        });
+
+      if (!granted) {
+        const error =
+          "This plugin require permissions to access to: " +
+          JSON.stringify(origins);
+        console.error(error, e);
+      }
+    }
+
+    const { uploadUrl, fileKey, fexId, parentId } = await this._initUploadResource(fileInfo);
     if (!uploadUrl || !fileKey) {
       throw new Error("Failed to get upload URL or file key.");
     }
@@ -213,6 +262,8 @@ class FexService {
       size: fileInfo.data.size,
       fileKey: fileKey,
       url: url,
+      fexId: fexId,
+      parentId: parentId,
     });
 
     return { url };
@@ -242,10 +293,11 @@ browser.cloudFile.onFileUpload.addListener(
     try {
       const result = await fexService.uploadFile(fileInfo);
       await fexService.saveState();
+      console.log(result);
+
       return result;
     } catch (e) {
-      console.error("Upload failed:", e);
-      return { error: e.message || true };
+      console.error(label, "Upload failed:", e);
     }
   },
 );
@@ -256,8 +308,23 @@ browser.cloudFile.onAccountAdded.addListener(() =>
 );
 
 //TODO: invoke on attachment converted from cloudFile to regular
-browser.cloudFile.onFileDeleted.addListener((account, fileId, tab) => {
+browser.cloudFile.onFileDeleted.addListener(async (account, fileId, tab) => {
   console.log("onFileDeleted", account, fileId, tab);
+
+  let servicePromise = fexServicePromises.get(tab.windowId);
+  if (!servicePromise) {
+    const service = new FexService(tab.windowId);
+    servicePromise = service.loadState().then(() => service);
+    fexServicePromises.set(tab.windowId, servicePromise);
+  }
+  const fexService = await servicePromise;
+
+  try {
+    await fexService.deleteFile(fileId);
+    console.log("File deleted:", fileId);
+  } catch (e) {
+    console.error("Delete failed:", e);
+  }
 });
 
 browser.cloudFile.onFileRename.addListener((account, fileId, newName, tab) => {
@@ -272,3 +339,7 @@ browser.cloudFile.onFileUploadAbort.addListener((account, fileId, tab) => {
 browser.runtime.onConnect.addListener(() => setConfigured("onConnect"));
 browser.runtime.onInstalled.addListener(() => setConfigured("onInstalled"));
 browser.runtime.onStartup.addListener(() => setConfigured("onStartup"));
+
+if (typeof module !== "undefined") {
+  module.exports = { FexService };
+}
