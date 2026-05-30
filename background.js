@@ -373,9 +373,20 @@ browser.cloudFile.onFileUpload.addListener(
     try {
       const result = await fexService.uploadFile(fileInfo);
       await fexService.saveState();
-      console.log(result);
+      console.log("onFileUpload result", result);
 
-      return result;
+      return {
+        ...result,
+        templateInfo: {
+          download_expiry_date: {
+            timestamp:
+              fexService.state.root_exp ?? Date.now() + 7 * 24 * 60 * 60 * 1000,
+            format: {
+              dateStyle: "long",
+            },
+          },
+        },
+      };
     } catch (e) {
       console.log("onFileUpload", "Upload failed:", e);
       throw e;
