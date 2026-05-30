@@ -81,7 +81,8 @@ describe('FexService', () => {
         status: 201
       })
       .mockResolvedValueOnce({ // _uploadResourceFileByChunks
-        status: 200
+        status: 200,
+        json: async () => ({ id: 555 })
       });
 
     await service.uploadFile(fileInfo);
@@ -138,5 +139,33 @@ describe('FexService', () => {
 
     expect(deleteFileSpy).toHaveBeenCalledWith(fileId);
     deleteFileSpy.mockRestore();
+  });
+
+  test('deleteFile does not send API request when fexId is undefined', async () => {
+    service.state.files = [{
+      id: 'tb-file-1',
+      name: 'test.txt',
+      fexId: undefined,
+      parentId: 444
+    }];
+    service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+
+    await service.deleteFile('tb-file-1');
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  test('deleteFile does not send API request when fexId is null', async () => {
+    service.state.files = [{
+      id: 'tb-file-1',
+      name: 'test.txt',
+      fexId: null,
+      parentId: 444
+    }];
+    service.state.token = { value: 'test-token', exp: Math.floor(Date.now() / 1000) + 3600 };
+
+    await service.deleteFile('tb-file-1');
+
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

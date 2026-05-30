@@ -131,10 +131,12 @@ class FexService {
       this.state.root_exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
     }
 
+    const fexId = initData.id ?? parseInt(initData.location.match(/\/upload\/(\d+)/)?.[1], 10);
+
     return {
       uploadUrl: initData.location,
       fileKey: initData.anon_upload_link,
-      fexId: initData.id,
+      fexId: fexId,
       parentId: initData.anon_upload_root_id,
     };
   }
@@ -162,6 +164,7 @@ class FexService {
   async _uploadResourceFileByChunks(uploadUrl, fileInfo) {
     // Upload file content
     const CHUNK_SIZE = 4 * 1024 * 1024;
+    let lastResponseData = null;
     for (let offset = 0; offset < fileInfo.data.size; offset += CHUNK_SIZE) {
       const chunk = fileInfo.data.slice(offset, offset + CHUNK_SIZE);
       const uploadResponse = await fetch(uploadUrl, {
@@ -187,6 +190,7 @@ class FexService {
             }, response: ${await uploadResponse.text()}`,
           );
         }
+        lastResponseData = await uploadResponse.json();
       } else if (uploadResponse.status !== 204) {
         throw new Error(
           `Upload failed: ${
@@ -195,12 +199,18 @@ class FexService {
         );
       }
     }
+    return lastResponseData;
   }
 
   async deleteFile(fileId) {
     const file = this.state.files.find((f) => f.id === fileId);
     if (!file) {
       console.warn("deleteFile: file not found", fileId);
+      return;
+    }
+
+    if (file.fexId == null) {
+      console.warn("deleteFile: missing fexId for file", fileId);
       return;
     }
 
@@ -222,10 +232,10 @@ class FexService {
         this.state.files = this.state.files.filter((f) => f.id !== fileId);
         await this.saveState();
       } else {
-        console.error("Failed to delete file:", await response.text());
+        console.log("Failed to delete file:", await response.text());
       }
     } catch (e) {
-      console.error("Error deleting file:", e);
+      console.log("Error deleting file:", e);
     }
   }
 
@@ -244,16 +254,19 @@ class FexService {
         const error =
           "This plugin require permissions to access to: " +
           JSON.stringify(origins);
-        console.error(error, e);
+        console.log(error, e);
       }
     }
 
-    const { uploadUrl, fileKey, fexId, parentId } = await this._initUploadResource(fileInfo);
+    const { uploadUrl, fileKey, fexId, parentId } =
+      await this._initUploadResource(fileInfo);
     if (!uploadUrl || !fileKey) {
       throw new Error("Failed to get upload URL or file key.");
     }
     await this._createResourceFile(uploadUrl, fileInfo);
-    await this._uploadResourceFileByChunks(uploadUrl, fileInfo);
+    const uploadResult = await this._uploadResourceFileByChunks(uploadUrl, fileInfo);
+
+    const realFexId = uploadResult?.id ?? fexId;
 
     const url = `https://fex.net/s/${fileKey}`;
     this.state.files.push({
@@ -262,7 +275,7 @@ class FexService {
       size: fileInfo.data.size,
       fileKey: fileKey,
       url: url,
-      fexId: fexId,
+      fexId: realFexId,
       parentId: parentId,
     });
 
@@ -297,7 +310,8 @@ browser.cloudFile.onFileUpload.addListener(
 
       return result;
     } catch (e) {
-      console.error(label, "Upload failed:", e);
+      console.log("onFileUpload", "Upload failed:", e);
+      throw e;
     }
   },
 );
@@ -323,7 +337,7 @@ browser.cloudFile.onFileDeleted.addListener(async (account, fileId, tab) => {
     await fexService.deleteFile(fileId);
     console.log("File deleted:", fileId);
   } catch (e) {
-    console.error("Delete failed:", e);
+    console.log("Delete failed:", e);
   }
 });
 
