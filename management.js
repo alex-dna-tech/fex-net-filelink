@@ -1,8 +1,21 @@
+async function checkCurrentTheme() {
+  try {
+    const currentTheme = await messenger.theme.getCurrent();
+
+    if (currentTheme.properties?.color_scheme === "dark") {
+      document.body.classList.add("dark");
+    }
+  } catch (error) {
+    console.log("Error retrieving theme:", error);
+  }
+}
+
 const id = new URL(location.href).searchParams.get("accountId");
 browser.cloudFile.updateAccount(id, { configured: true });
 
 // Remove expired records on script start
 removeExpiredRecords();
+checkCurrentTheme();
 
 /**
  * Removes expired records from browser.storage.local
